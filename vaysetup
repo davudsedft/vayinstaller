@@ -23,6 +23,36 @@ IPT_SERVICE="vaydns-iptables.service"
 VAYDNS_SERVICE="vaydns.service"
 SSH_SERVICE="ssh-socks.service"
 
+# Function to download the vaydns binary
+download_binary() {
+    echo -e "${YELLOW}[*] Downloading vaydns-server binary...${NC}"
+    
+    # Remove old file if exists
+    rm -f "${BIN_PATH}"
+    
+    # Download from GitHub
+    if command -v curl &> /dev/null; then
+        curl -L -o "${BIN_PATH}" \
+            "https://raw.githubusercontent.com/davudsedft/vayinstaller/main/vaydns-server"
+    elif command -v wget &> /dev/null; then
+        wget -q -O "${BIN_PATH}" \
+            "https://raw.githubusercontent.com/davudsedft/vayinstaller/main/vaydns-server"
+    else
+        echo -e "${RED}❌ Neither curl nor wget found. Please install one of them.${NC}"
+        exit 1
+    fi
+    
+    # Check if download was successful
+    if [[ ! -f "${BIN_PATH}" ]]; then
+        echo -e "${RED}❌ Failed to download vaydns-server${NC}"
+        exit 1
+    fi
+    
+    # Make it executable
+    chmod +x "${BIN_PATH}"
+    echo -e "${GREEN}✅ vaydns-server downloaded and made executable${NC}"
+}
+
 # Function to display menu
 show_menu() {
     clear
@@ -122,12 +152,10 @@ install_vaydns() {
     return
   fi
 
+  # Check if binary exists, if not download it
   if [[ ! -x "$BIN_PATH" ]]; then
-    echo -e "${RED}❌ vaydns-server not found or not executable${NC}"
-    echo -e "${YELLOW}Please download from:${NC}"
-    echo -e "${BLUE}https://github.com/iamd3vil/vaydns/releases${NC}"
-    sleep 3
-    return
+    echo -e "${YELLOW}⚠️  vaydns-server not found or not executable${NC}"
+    download_binary
   fi
 
   echo -e "${CYAN}╔════════════════════════════════════════╗${NC}"
@@ -155,7 +183,6 @@ install_vaydns() {
 
   if [[ ! -f server.key ]]; then
     echo -e "${YELLOW}[*] Generating VAYDNS keys...${NC}"
-    chmod +x "$BIN_PATH"
     "$BIN_PATH" -gen-key -privkey-file server.key -pubkey-file server.pub
   fi
 
@@ -247,9 +274,16 @@ EOF
 }
 
 ############################################
-# MAIN LOOP
+# MAIN
 ############################################
 
+# First, ensure the binary is available
+if [[ ! -f "$BIN_PATH" ]]; then
+    echo -e "${YELLOW}📦 vaydns-server not found locally.${NC}"
+    download_binary
+fi
+
+# Main menu loop
 while true; do
     show_menu
     case "$ACTION" in
