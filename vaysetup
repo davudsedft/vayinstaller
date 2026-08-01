@@ -112,6 +112,12 @@ remove_vaydns() {
 ############################################
 generate_dns_link() {
 
+  if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo -e "${RED}❌ VAYDNS not installed${NC}"
+    sleep 2
+    return
+  fi
+
   source "$CONFIG_FILE"
 
   if [[ ! -f "${WORKDIR}/server.pub" ]]; then
@@ -138,6 +144,11 @@ generate_dns_link() {
   echo -e "${BLUE}📋 Copy this link and use it in your client${NC}"
   echo
   read -rp "Press Enter to continue..."
+}
+
+# Alias for show_dns_link
+show_dns_link() {
+    generate_dns_link
 }
 
 ############################################
